@@ -167,3 +167,7 @@ dans le fichier : parameters.tfvars
 
 apres on va dans : ubuntu@ekolasinac-vm:~/ArmoniK/infrastructure/quick-deploy/localhost$ 
 executer : make dans le terminal 
+
+
+editer Helloworld :
+https://github.com/aneoconsulting/ArmoniK.Samples
