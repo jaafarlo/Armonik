@@ -75,3 +75,95 @@ ubuntu@ekolasinac-vm:~$ ls
 ArmoniK  PymoniK  kubectl
 ubuntu@ekolasinac-vm:~$ pipx install armonik-cli
 ⢿ installing armonik-cli
+
+
+Lancer des taches avec les parametres qu'on veut :
+ubuntu@ekolasinac-vm:~$ echo $AKCONFIG
+/home/ubuntu/ArmoniK/infrastructure/quick-deploy/localhost/generated/armonik-cli.yaml
+ubuntu@ekolasinac-vm:~$ 
+ubuntu@ekolasinac-vm:~$ cat $AKCONFIG
+# ArmoniK Connection Configuration
+---
+"endpoint": "http://10.100.1.10:5001"
+ubuntu@ekolasinac-vm:~$ ^C
+ubuntu@ekolasinac-vm:~$ armonik cluster info
+╭───────────────────────────────────────────────────────────── Cluster Information ──────────────────────────────────────────────────────────────╮
+│ Endpoint:     http://10.100.1.10:5001                                                                                                          │
+│ Core Version: 0.34.4                                                                                                                           │
+│ API Version:  3.27.0  
+
+###à executer sur le terminal #########
+docker run --rm \
+    -e HtcMock__NTasks=10000 \
+    -e HtcMock__TotalCalculationTime=00:00:10 \
+    -e HtcMock__DataSize=1 \
+    -e HtcMock__MemorySize=1 \
+    -e HtcMock__SubTasksLevels=10\
+    -e HtcMock__Partition=htcmock \
+    -e HtcMock__EnableFastCompute=true \
+    -e HtcMock__TaskRpcException="" \
+    -e GrpcClient__Endpoint=http://10.100.1.10:5001 \
+    dockerhubaneo/armonik_core_htcmock_test_client:0.34.4
+###############################################################
+
+kubectl -n kube kub-system get pods 
+
+Ajouter une partition :
+dans le fichier : parameters.tfvars
+
+  # Partition for the Helloworld worker
+  helloworld = {
+    # number of replicas for each deployment of compute plane
+    replicas = 0
+    # Socket type used by agent and worker to communicate
+    socket_type = "tcp"
+    # ArmoniK polling agent
+    polling_agent = {
+      limits = {
+        cpu    = "2000m"
+        memory = "2048Mi"
+      }
+      requests = {
+        cpu    = "50m"
+        memory = "50Mi"
+      }
+    }
+    # ArmoniK workers
+    worker = [
+      {
+        image = "dockerhubaneo/armonik_demo_helloworld_worker"
+        tag= "v2.21.0-SNAPSHOT.78.sha.80a7a9d"
+        limits = {
+          cpu    = "1000m"
+          memory = "1024Mi"
+        }
+        requests = {
+          cpu    = "50m"
+          memory = "50Mi"
+        }
+      }
+    ]
+    hpa = {
+      type              = "prometheus"
+      polling_interval  = 15
+      cooldown_period   = 300
+      min_replica_count = 0
+      max_replica_count = 5
+      behavior = {
+        restore_to_original_replica_count = true
+        stabilization_window_seconds      = 300
+        type                              = "Percent"
+        value                             = 100
+        period_seconds                    = 15
+      }
+      triggers = [
+        {
+          type      = "prometheus"
+          threshold = 2
+        },
+      ]
+    }
+  },
+
+apres on va dans : ubuntu@ekolasinac-vm:~/ArmoniK/infrastructure/quick-deploy/localhost$ 
+executer : make dans le terminal 
